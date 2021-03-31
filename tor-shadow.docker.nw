@@ -106,9 +106,8 @@ RUN apt-get update && apt-get install -y \
 Now we can install the Tor plugin.
 <<install shadow plugin for Tor>>=
 WORKDIR /tor-shadow
-RUN git clone https://github.com/shadow/shadow-plugin-tor.git \
-    plugin-tor-src && \
-  cd plugin-tor-src && \
+RUN git clone https://github.com/shadow/shadow-plugin-tor.git && \
+  cd shadow-plugin-tor && \
   yes | ./setup dependencies && \
   yes | ./setup build && \
   yes | ./setup install
