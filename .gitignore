@@ -1,3 +1,9 @@
+Dockerfile
+tor-shadow.docker.mk
+tor-shadow.docker.pdf
+tor-shadow.docker.tex
+
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof

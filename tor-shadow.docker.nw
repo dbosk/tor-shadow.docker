@@ -1,0 +1,131 @@
+This is the documentation for a Docker image for running Tor using the Shadow 
+discrete-event network simulator.
+
+
+\section{Building}
+
+The build instructions are as follows.
+<<tor-shadow.docker.mk>>=
+.PHONY: all
+all: tor-shadow.docker.pdf tor-shadow.docker
+
+<<build documentation>>
+<<build docker image>>
+
+.PHONY: clean distclean
+
+INCLUDE_MAKEFILES=./makefiles
+include ${INCLUDE_MAKEFILES}/noweb.mk
+include ${INCLUDE_MAKEFILES}/tex.mk
+@
+
+Just run \verb'make all' and it will produce the Docker image.
+The details are covered below.
+
+
+\section{Running the image}
+
+Once you have the image, either from building or from Docker Hub, then
+\begin{center}
+\verb'docker run -it --tmpfs /dev/shm:rw,nosuid,nodev,exec,size=1g shadow'
+\end{center}
+will run the image.
+The \verb'--tmpfs' argument is important.
+Probably you must increase the \verb'size' parameter.
+
+There are more things that you might need to change.
+See
+\begin{center}
+\verb'https://github.com/shadow/shadow/blob/main/docs/1.1-Shadow.md#system-configs-and-limits'.
+\end{center}
+
+The Git repo of the tools are located in \verb'/tor-shadow'.
+
+
+\section{The Docker image}
+
+The image is based on the official documentation of the Shadow project.
+The [[<<Dockerfile>>]] will have the following structure:
+<<Dockerfile>>=
+<<base image to use>>
+<<install packages>>
+<<install shadow plugin for Tor>>
+@
+
+We build it from this documentation as follows.
+<<build docker image>>=
+Dockerfile: tor-shadow.docker.nw
+	${NOTANGLE}
+
+.PHONY: clean-Dockerfile
+clean: clean-Dockerfile
+clean-Dockerfile:
+	${RM} Dockerfile
+@
+
+Then we can build the image as follows.
+<<build docker image>>=
+DOCKER_ID_USER?=dbosk
+
+.PHONY: tor-shadow.docker
+tor-shadow.docker: Dockerfile
+	docker build -t tor-shadow .
+	docker tag tor-shadow ${DOCKER_ID_USER}/tor-shadow
+
+.PHONY: distclean-docker
+distclean: distclean-docker
+distclean-docker:
+	docker image rm -f tor-shadow
+	docker image rm -f ${DOCKER_ID_USER}/tor-shadow
+@
+
+And we can push it to Docker Hub.
+<<build docker image>>=
+.PHONY: push
+push: tor-shadow.docker
+	docker push ${DOCKER_ID_USER}/tor-shadow
+@
+
+\subsection{The base image}
+
+Now we cover the contents of [[<<Dockerfile>>]].
+We will base the environment on the existing Shadow image.
+<<base image to use>>=
+FROM dbosk/shadow:latest
+@
+
+We will install the required packages.
+<<install packages>>=
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+  automake autoconf zlib1g-dev liblzma5 liblzma-dev
+@
+
+\subsection{The Tor plugin}
+
+Now we can install the Tor plugin.
+<<install shadow plugin for Tor>>=
+WORKDIR /tor-shadow
+RUN git clone https://github.com/shadow/shadow-plugin-tor.git \
+    plugin-tor-src && \
+  cd plugin-tor-src && \
+  yes | ./setup dependencies && \
+  yes | ./setup build && \
+  yes | ./setup install
+@
+
+
+\section{This documentation}
+
+We can compile this documentation as follows.
+<<build documentation>>=
+tor-shadow.docker.pdf: tor-shadow.docker.nw
+	${NOWEAVE.pdf}
+
+.PHONY: clean-doc
+clean: clean-doc
+clean-doc:
+	${RM} tor-shadow.docker.pdf tor-shadow.docker.tex
+	${RM} tor-shadow.docker.aux tor-shadow.docker.fdb_latexmk tor-shadow.docker.fls tor-shadow.docker.log
+@
+
