@@ -27,7 +27,7 @@ The details are covered below.
 
 Once you have the image, either from building or from Docker Hub, then
 \begin{center}
-\verb'docker run -it --tmpfs /dev/shm:rw,nosuid,nodev,exec,size=1g shadow'
+\verb'docker run -it --tmpfs /dev/shm:rw,nosuid,nodev,exec,size=1g tor-shadow'
 \end{center}
 will run the image.
 The \verb'--tmpfs' argument is important.
